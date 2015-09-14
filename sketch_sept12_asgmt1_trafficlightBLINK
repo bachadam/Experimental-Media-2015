@@ -1,0 +1,149 @@
+const int g = 10; // traffic green led
+const int y = 11; // traffic yellow led
+const int r = 12; // traffic red led
+const int walk = 2; // walk led
+const int notWalk = 3; // dont walk led
+const int button = 4; // crossing button
+
+const int STATE_r = 0;
+const int STATE_g = 1;
+const int STATE_y = 2;
+const int STATE_w = 3; //walking light state
+int state = STATE_r;
+
+int buttonState = 0;
+bool buttonPressed = true;
+
+long transTimer = 0;
+
+unsigned long currentMillis = 0;
+long prevBlink = 0; //store last blinking led updates
+int blinkInterval = 1000; // the interval of led blink
+int blinkState = LOW;
+
+void setup() {
+  pinMode(g, OUTPUT);
+  pinMode(y, OUTPUT);
+  pinMode(r, OUTPUT);
+  pinMode(walk, OUTPUT);
+  pinMode(notWalk, OUTPUT);
+  
+  pinMode(button, INPUT);
+}
+
+void loop() {
+  currentMillis = millis();
+  checkTrans();
+  checkButton();
+  
+}
+
+void checkButton() {
+  buttonState = digitalRead(button);
+  
+  if (buttonState == HIGH) {
+    buttonPressed = true;
+  }
+}
+
+void checkTrans() {
+  if (state == STATE_r) {
+     if (timerComplete() == true) {
+      transToG();
+     }
+     if (buttonPressed == true) {
+      walkSignal();
+     }
+  } else if (state == STATE_y) {
+     if (timerComplete() == true) {
+      transToR();
+     }    
+  } else if (state == STATE_g) {
+     if (timerComplete() == true) {
+      transToY();
+     }    
+  } else if (state == STATE_w) {
+    if (timerComplete() == true) {
+      transToG();
+    }
+    if (currentMillis > transTimer - 4000) { //halfway through walk cycle
+      blinkLED();
+    }
+  }
+}
+
+void blinkLED() {
+  if (currentMillis - prevBlink > blinkInterval) {
+    prevBlink = currentMillis;
+    blinkInterval = blinkInterval * .8;
+    
+    if (blinkState == LOW) {
+      blinkState = HIGH;
+    } else { 
+      blinkState = LOW;
+    }
+    
+    digitalWrite(notWalk, blinkState);
+  }
+}
+
+void walkSignal() {
+  long timeNow = millis();
+  transTimer = timeNow + 8000;
+  state = STATE_w;
+
+  digitalWrite(g, LOW);
+  digitalWrite(y, LOW);
+  digitalWrite(r,HIGH);
+  digitalWrite(notWalk, LOW);
+  digitalWrite(walk, HIGH);
+
+  buttonPressed = false;  
+}
+
+void transToG() {
+  long timeNow = millis();
+  transTimer = timeNow + 4000;
+  blinkInterval = 1000; //reset that interval
+  prevBlink = 0; //reset!
+  state = STATE_g;
+
+  digitalWrite(g, HIGH);
+  digitalWrite(y, LOW);
+  digitalWrite(r, LOW);
+  digitalWrite(notWalk, HIGH);
+  digitalWrite(walk, LOW);
+}
+
+void transToY() {
+  long timeNow = millis();
+  transTimer = timeNow + 500;
+  state = STATE_y;
+
+  digitalWrite(g, LOW);
+  digitalWrite(y, HIGH);
+  digitalWrite(r, LOW);
+  digitalWrite(notWalk, HIGH);
+  digitalWrite(walk, LOW);
+}
+
+void transToR() {
+  long timeNow = millis();
+  transTimer = timeNow + 3000;
+  state = STATE_r;
+
+  digitalWrite(g, LOW);
+  digitalWrite(y, LOW);
+  digitalWrite(r, HIGH);
+  digitalWrite(notWalk, HIGH);
+  digitalWrite(walk, LOW);
+}
+
+bool timerComplete() {
+  long timeNow = millis();
+  if (timeNow > transTimer) {
+    return true;
+  } else {
+    return false;
+  }
+}
