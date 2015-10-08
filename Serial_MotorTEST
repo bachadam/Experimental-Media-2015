@@ -17,7 +17,7 @@ bool started = false; //serial Flag
 
 const int LED = 13; // some visual feedback
 //=============================================
-int target = 440.0;  //target frequency for motor, just this number for example
+int target = 440;  //target frequency for motor, just this number for example
 
 //=============================================
 void setup() {
