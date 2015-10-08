@@ -1,0 +1,72 @@
+#include <Stepper.h>
+#define STEPS 200
+
+const int stepsPerRevolution = 200; 
+Stepper myStepper(stepsPerRevolution, 2, 3, 4, 5);
+
+int stepCount = 0;     // number of steps motor as taken
+
+//=========================================
+unsigned long countervalue = 0;
+
+String inString = " "; //data in port--experimenting with sending a string
+
+int inByte= 0; // data sent from max  int for now.
+
+bool started = false; //serial Flag
+
+const int LED = 13; // some visual feedback
+//=============================================
+int target = 440.0;  //target frequency for motor, just this number for example
+
+//=============================================
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(LED, OUTPUT);
+
+  myStepper.setSpeed(30);
+}
+
+void loop() {
+  //inByte = inString.toInt();
+  
+  if (Serial.available() > 0) {
+    inByte = Serial.read();
+    //inByte = inString.toInt();
+    started = true;
+   
+  }
+  
+  if (started) {
+    Serial.print(countervalue);
+    Serial.print(" Teensy Recieved: ");
+    Serial.print(inByte);
+    Serial.println();
+    
+    countervalue = (countervalue+1);
+
+    pinBlink();
+    stepperMove();
+    started = false;
+  }
+  
+}
+
+void stepperMove() {
+  if (inByte < target) {
+    myStepper.step(stepsPerRevolution);
+  }
+  
+  if (inByte > target) {
+    myStepper.step(-stepsPerRevolution);
+  }
+  
+}
+
+void pinBlink() {
+  digitalWrite(LED, HIGH);
+  delay(100);
+  digitalWrite(LED, LOW);
+  
+}
